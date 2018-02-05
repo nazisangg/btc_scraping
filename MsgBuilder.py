@@ -27,6 +27,10 @@ class MsgBuilder(object):
         text_plain = MIMEText(text, 'plain', 'utf-8')
         self.msg.attach(text_plain)
 
+    def msg_html(self, text):
+        text_html = MIMEText(text, 'html', 'utf-8')
+        self.msg.attach(text_html)
+
     def msg_image(self,url):
         sendimagefile = open(url, 'rb').read()
         image = MIMEImage(sendimagefile)

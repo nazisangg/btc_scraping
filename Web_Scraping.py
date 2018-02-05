@@ -3,6 +3,7 @@ import requests
 import sys
 from MsgBuilder import MsgBuilder
 from smtpGmail import SMTPGmail
+from bestLogical import BestLogical
 
 
 '''URL -> HTML -> Tree'''
@@ -56,7 +57,7 @@ class Web_Scraping(object):
     def findAllByAttributes_brotherSearch(self):
         temExchangeName = self.exchangeName
         bitconName = ''
-        print(temExchangeName)
+        #print(temExchangeName)
         for x in self.findAllByTagName():
             targetInformationDic = {}
             #print(temExchangeName[0])
@@ -71,13 +72,15 @@ class Web_Scraping(object):
                             if self.assginTileToPrice(m):
                                 #print('here')
                                 bitconName = m.text
-                            if m.has_attr('data-usd'):
-                                dic = {bitconName:m['data-usd']}
-                                total_dic.update(dic)
+                            if m.has_attr('class'):
+                                #print(m['class'])
+                                if m['class'].count('price') == 1:
+                                    dic = {bitconName:m.text.split('$')[1]}
+                                    total_dic.update(dic)
                                 #print(total_dic)
                         x = x.find_next(self.targetTag)
                         self.exchangeContent[exchangename] = total_dic
-                        print(self.exchangeContent)
+                        #print(self.exchangeContent)
                         #print('x is: ', x)
                 except(AttributeError):
                     pass
@@ -104,14 +107,24 @@ class Web_Scraping(object):
         return argument
 
 
+    def findOption(self):
+        bestlogical = BestLogical(self.exchangeContent)
+        bestlogical.dicIntoCheckModel()
+        exchangesOverLimit = bestlogical.get_finalDic()
+        text = ''
+        for conName, value in  exchangesOverLimit.items():
+            text = text +'\n'+ "the coin named: " + conName + ' ,highest exchange: ' + value[0] +' ,lowest exchange: ' + value[1] + ' ,difference:'+ str(value[2])
+        self.messagesender(text)
 
-    def massagesender(self):
+
+
+
+    def messagesender(self, text):
         sender = 'nazisang@gmail.com'
         receiver = 'nazisang@gmail.com'
         subject = 'test'
         msgclass = MsgBuilder()
         msgclass.msg_init(sender, receiver, subject)
-        text = 'text!!!!!!'
         msgclass.msg_text(text)
         msg = msgclass.get_msg()
         server = 'smtp.gmail.com'
@@ -122,6 +135,9 @@ class Web_Scraping(object):
         smtp.sendMail(sender, receiver, msg)
 
     # 从已经爬得得dict 中拿出一个 exchange得名字，
+
+
+
     def main(self):
         targetInformationDic = self.findAllByAttributes()
         tree = self.tree.find_all("tbody")
@@ -136,6 +152,8 @@ if __name__ == "__main__":
     ws = Web_Scraping("https://coinmarketcap.com/exchanges/volume/24-hour/all/", "tr", "id")
     ws.findAllByAttributes_exchangeName()
     ws.findAllByAttributes_brotherSearch()
+    ws.findOption()
+
 
 
 
